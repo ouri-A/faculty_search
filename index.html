@@ -131,18 +131,21 @@ const GROUPS = [
 let activeGroup = GROUPS[0].key;
 let state = {};
 let searchTerm = "";
-const STORAGE_KEY = "faculty-checklist-v1";
-
+const STORAGE_URL = "https://jsonblob.com/api/jsonBlob/019f40f6-def7-7a74-8094-f3d3463c9dd9";
 function allEntries() {
   return GROUPS.flatMap(g => DATA[g.key]);
 }
 
 async function loadState() {
   try {
-    const res = await window.storage.get(STORAGE_KEY, true);
-    state = res && res.value ? JSON.parse(res.value) : {};
+    const res = await fetch(STORAGE_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("bad status " + res.status);
+    const data = await res.json();
+    state = (data && typeof data === "object") ? data : {};
+    document.getElementById("statusText").textContent = "Synced";
+    document.getElementById("statusDot").classList.remove("saving");
   } catch (e) {
-    state = {};
+    document.getElementById("statusText").textContent = "Offline - showing last loaded state";
   }
   render();
 }
@@ -156,14 +159,18 @@ function saveState() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
-      await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
+      const res = await fetch(STORAGE_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state)
+      });
+      if (!res.ok) throw new Error("bad status " + res.status);
       dot.classList.remove("saving");
       txt.textContent = "Synced";
     } catch (e) {
       txt.textContent = "Save failed - retrying";
-      dot.classList.add("saving");
     }
-  }, 250);
+  }, 300);
 }
 
 function renderTabs() {
@@ -259,7 +266,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
 });
 
 loadState();
-setInterval(loadState, 12000);
+setInterval(loadState, 10000);
 </script>
 </body>
 </html>
