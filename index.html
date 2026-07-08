@@ -161,7 +161,7 @@ function saveState() {
     try {
       const res = await fetch(STORAGE_URL, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(state)
       });
       if (!res.ok) throw new Error("bad status " + res.status);
