@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faculty checklist — Robotics / AI / CPS</title>
+<style>
+  :root {
+    --ink: #1f2430;
+    --ink-soft: #5b6172;
+    --ink-faint: #8b90a0;
+    --paper: #faf9f6;
+    --card: #ffffff;
+    --line: #e4e1d8;
+    --robotics: #0f6e56;
+    --robotics-bg: #e1f5ee;
+    --ai: #534ab7;
+    --ai-bg: #eeedfe;
+    --cps: #993c1d;
+    --cps-bg: #faece7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; }
+  header { margin-bottom: 24px; }
+  h1 { font-size: 21px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { font-size: 13px; color: var(--ink-soft); margin: 0; line-height: 1.5; }
+  .status-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--ink-faint); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #63a35c; flex-shrink: 0; }
+  .dot.saving { background: #d9a441; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+  .overall {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 20px;
+  }
+  .overall-num { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
+  .overall-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .overall-bar-fill { height: 100%; background: var(--ink); border-radius: 3px; transition: width .3s ease; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .tab {
+    appearance: none; border: none; background: none; cursor: pointer;
+    padding: 10px 4px; margin-right: 18px; font-size: 14px; font-weight: 500;
+    color: var(--ink-faint); border-bottom: 2px solid transparent; font-family: inherit;
+  }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .tab .count { font-weight: 400; color: var(--ink-faint); }
+
+  .search-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  input[type="text"] {
+    flex: 1; font-size: 14px; padding: 9px 12px; border: 1px solid var(--line);
+    border-radius: 8px; font-family: inherit; background: var(--card); color: var(--ink);
+  }
+  input[type="text"]:focus { outline: none; border-color: var(--ink-faint); }
+  button.ghost {
+    font-size: 13px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); color: var(--ink-soft); cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  button.ghost:hover { background: var(--paper); }
+
+  .group-progress { font-size: 12px; color: var(--ink-faint); margin-bottom: 10px; }
+
+  ul.list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card); }
+  li.row {
+    display: flex; align-items: flex-start; gap: 11px;
+    padding: 11px 14px; border-bottom: 1px solid var(--line);
+  }
+  li.row:last-child { border-bottom: none; }
+  li.row.checked { background: #fbfaf7; }
+  li.row.checked .name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--line); }
+  li.row.checked .meta { color: var(--ink-faint); opacity: .6; }
+
+  input[type="checkbox"] {
+    width: 18px; height: 18px; margin: 2px 0 0; flex-shrink: 0; cursor: pointer; accent-color: var(--ink);
+  }
+  .rowtext { flex: 1; min-width: 0; }
+  .name { font-size: 14px; font-weight: 500; margin: 0 0 2px; }
+  .meta { font-size: 12.5px; color: var(--ink-soft); margin: 0; line-height: 1.5; }
+  .meta .sep { margin: 0 6px; color: var(--line); }
+  .tag {
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em;
+    padding: 2px 7px; border-radius: 5px; margin-left: 8px; flex-shrink: 0;
+  }
+  .tag.robotics { color: var(--robotics); background: var(--robotics-bg); }
+  .tag.ai { color: var(--ai); background: var(--ai-bg); }
+  .tag.cps { color: var(--cps); background: var(--cps-bg); }
+
+  .empty { padding: 32px 16px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+  footer { margin-top: 20px; font-size: 11.5px; color: var(--ink-faint); text-align: center; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Faculty checklist — Robotics / AI / Cyber-Physical Systems</h1>
+    <p class="sub">Name, phone and cabin for each faculty group. Anyone with this link sees the same checklist — checking a box here updates it for everyone.</p>
+    <div class="status-row"><span class="dot" id="statusDot"></span><span id="statusText">Synced</span></div>
+  </header>
+
+  <div class="overall">
+    <div class="overall-num" id="overallNum">0 / 0</div>
+    <div class="overall-bar"><div class="overall-bar-fill" id="overallBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="search-row">
+    <input type="text" id="search" placeholder="Search by name or cabin...">
+    <button class="ghost" id="resetBtn">Uncheck all in tab</button>
+  </div>
+  <div class="group-progress" id="groupProgress"></div>
+  <ul class="list" id="list"></ul>
+
+  <footer>Sources: Guide_List_PJT-1.pdf (group, phone) and FACULTY_Cabin.xlsx (cabin), matched by email.<br>Entries without a cabin record in the spreadsheet are marked "Not listed".</footer>
+</div>
+
+<script>
+const DATA = {"Robotics": [{"name": "Akkarapakam Suneesh Jacob", "phone": "9700578123", "cabin": "Not listed", "email": "suneesh.jacob@vit.ac.in"}, {"name": "Anita Christaline J", "phone": "9444028830", "cabin": "AB 3- First Floor Annexure Cabin No 23", "email": "anitachristaline.j@vit.ac.in"}, {"name": "Ganala Santoshi", "phone": "8056976904", "cabin": "AB 3 - 410 Robotics Lab (Faculty Cabin inside LAB)", "email": "ganala.santoshi@vit.ac.in"}, {"name": "Harini S", "phone": "9444419041", "cabin": "AB 1 - 3F Main 305, Cabin No. 8", "email": "harini.s@vit.ac.in"}, {"name": "K Muthukumaran", "phone": "9603004658", "cabin": "AB 4 - Third Floor, Cabin 25", "email": "muthukumaran.k@vit.ac.in"}, {"name": "Maria Anu V", "phone": "9445761849", "cabin": "AB 3 - GF Main 011, Cabin No. 05", "email": "mariaanu.v@vit.ac.in"}, {"name": "Meignanamoorthi D", "phone": "9842616197", "cabin": "Not listed", "email": "meignanamoorthi.d@vit.ac.in"}, {"name": "Nithya Darisini P.S", "phone": "9487045673", "cabin": "Admin Block - 2F Academics Office", "email": "psnithyadarisini@vit.ac.in"}, {"name": "Prabha B", "phone": "9962647681", "cabin": "AB 3 Third Floor Annexure Cabin No 20", "email": "prabha.b@vit.ac.in"}, {"name": "Prem Sankar N", "phone": "9688883811", "cabin": "AB 3 - GF 012, Cabin 8", "email": "premsankar.n@vit.ac.in"}, {"name": "Rekha D", "phone": "9841408327", "cabin": "AB3 - 210 (INDUSTRY 4.0) Lab", "email": "rekha.d@vit.ac.in"}, {"name": "S Edward Jero", "phone": "9600047486", "cabin": "Alpha-Health Centre - 1F Main, Cabin No. 2", "email": "edwardjero.s@vit.ac.in"}, {"name": "S Venkatraman", "phone": "9042987049", "cabin": "AB 3 - 3F Main 310A, Cabin No. 1", "email": "venkatraman.s@vit.ac.in"}, {"name": "Sandhya P", "phone": "7299480949", "cabin": "AB 1 - 1F New Annexure, Cabin No. 35", "email": "sandhya.p@vit.ac.in"}, {"name": "Saranyaraj D", "phone": "9952045362", "cabin": "AB 3 Fifth floor Annexure cabin no 1", "email": "saranyaraj.d@vit.ac.in"}, {"name": "Sathian D", "phone": "9994946043", "cabin": "AB 3 - 7F Main 711, ADAPT Lab (Faculty Cabin inside LAB)", "email": "sathian.d@vit.ac.in"}, {"name": "Sudharson S", "phone": "9597560492", "cabin": "AB 3 - 7F, Cabin No.\u00a08", "email": "sudharson.s@vit.ac.in"}, {"name": "Suhail K", "phone": "8606660396", "cabin": "Not listed", "email": "suhail.k@vit.ac.in"}, {"name": "Suvidha Rupesh Kumar", "phone": "8939663691", "cabin": "AB 3 - 6F Main 614, Cabin No. 9", "email": "suvidha.rupesh@vit.ac.in"}, {"name": "Umesh K", "phone": "9789082576", "cabin": "AB 3-7F-Annexure Faculty Cabin, Cabin No: 1", "email": "umesh.k@vit.ac.in"}, {"name": "V Arunkumar", "phone": "9843437392", "cabin": "AB 3 - 3F Autonomous Lab 311 (Faculty Cabin inside LAB)", "email": "arunkumar.v@vit.ac.in"}], "Artificial Intelligence": [{"name": "A Swaminathan", "phone": "9677818282", "cabin": "AB 4 - Third Floor, Cabin 24", "email": "swaminathan.a@vit.ac.in"}, {"name": "Aarthi B", "phone": "9585052507", "cabin": "AB 1 - 4th Floor Annexure 2 Cabin 44", "email": "aarthi.b@vit.ac.in"}, {"name": "Abdul Quadir Md", "phone": "9884004139", "cabin": "AB 1 - 4F Annexure, Cabin No. 38", "email": "abdulquadir.md@vit.ac.in"}, {"name": "Abinaya S", "phone": "9677005633/9894410642", "cabin": "AB 3 - GF Main 012, Cabin No. 14", "email": "s.abinaya@vit.ac.in"}, {"name": "Abirami S", "phone": "9944228341", "cabin": "AB 3 - 1F Main 112, Cabin No. 14", "email": "abirami.s@vit.ac.in"}, {"name": "Abishi Chowdhury", "phone": "9112392035/9595347658", "cabin": "AB 1 - 7F Annexure, Cabin No. 09", "email": "abishi.chowdhury@vit.ac.in"}, {"name": "Amrit Pal", "phone": "8318699522", "cabin": "AB 1 - 6F Main 604, Cabin No. 08", "email": "amrit.pal@vit.ac.in"}, {"name": "Anubha Pearline S", "phone": "9994031215", "cabin": "AB 3 - 6F Main 615, Cabin No. 24", "email": "anubhapearline.s@vit.ac.in"}, {"name": "Appalaraju Muralidhar", "phone": "9094962433", "cabin": "AB 3 - 7F CIQA Room, Cabin No. 6", "email": "muralidhar.a@vit.ac.in"}, {"name": "Aravindkumar S", "phone": "9942544146", "cabin": "AB 3 - 7F,\u00a0Cabin\u00a0No.21", "email": "aravindkumar.s@vit.ac.in"}, {"name": "Aswiga R V", "phone": "9790341644", "cabin": "AB 3 - 2F Main 211, Cabin No. 10", "email": "aswiga.rv@vit.ac.in"}, {"name": "Balasundaram A", "phone": "9841288826", "cabin": "AB 1 - 3F Main 305, Cabin No. 7", "email": "balasundaram.a@vit.ac.in"}, {"name": "Balraj E", "phone": "6381033077", "cabin": "AB 3 Sixth floor\u00a0 Annexure Cabin No 6", "email": "balraj.e@vit.ac.in"}, {"name": "Bharadwaja Kumar", "phone": "9092959969", "cabin": "AB 3 - 7F CIQA Room, Cabin No.1", "email": "bharadwaja.kumar@vit.ac.in"}, {"name": "Brindha S", "phone": "9843963208", "cabin": "AB 3 - 2F Main 211, Cabin No. 6", "email": "brindha.s@vit.ac.in"}, {"name": "Christopher Columbus C", "phone": "9443528013/8438760133", "cabin": "AB 3 - 1F Main, Cabin No. 17", "email": "christopher.columbus@vit.ac.in"}, {"name": "D Jeya Mala", "phone": "9994836867", "cabin": "AB 3 - 402 Programming Language Lab  6", "email": "jeyamala.d@vit.ac.in"}, {"name": "Deepa Nivethika S", "phone": "9629136941", "cabin": "AB 3 - 5F Main 515, Cabin No. 19", "email": "deepanivethika.s@vit.ac.in"}, {"name": "Deepika Roselind J", "phone": "9952982083", "cabin": "AB 3 - 5F Main 511, Cabin No. 8", "email": "deepikaroselind.j@vit.ac.in"}, {"name": "Devi K", "phone": "9842427236", "cabin": "AB 3 Sixth floor\u00a0 Annexure Cabin No 8", "email": "devi.k@vit.ac.in"}, {"name": "Dominic Savio M", "phone": "9486988915/9043554523", "cabin": "AB 3 - 1F Main 111, Cabin No. 8", "email": "dominicsavio.m@vit.ac.in"}, {"name": "Elakiya E", "phone": "9952326164", "cabin": "AB 3 - 2F Main 211, Cabin No. 7", "email": "elakiya.e@vit.ac.in"}, {"name": "Elakya R", "phone": "9884852306", "cabin": "AB 3 - 7th Floor Main & 714 Cabin 1", "email": "elakya.r@vit.ac.in"}, {"name": "G.Manju", "phone": "9790989932", "cabin": "AB 3 - 5F Main, Cabin No. 7", "email": "manju.g@vit.ac.in"}, {"name": "Gayathri Devi S", "phone": "9865856367", "cabin": "AB 3-6F-Main Faculty cabin, Cabin no: 13", "email": "gayathridevi.s@vit.ac.in"}, {"name": "Helen Vijitha P", "phone": "9840806971", "cabin": "AB 3 Sixth floor\u00a0 Annexure Cabin No 7", "email": "helen.vijitha@vit.ac.in"}, {"name": "Ilakiyaselvan N", "phone": "9444633301", "cabin": "AB 1 - 2F Annexure, Cabin No. 20", "email": "ilakiyaselvan.n@vit.ac.in"}, {"name": "J Uma Maheswari", "phone": "9626070924", "cabin": "AB 2 - 7F, Cabin No.1", "email": "umamaheswari.j@vit.ac.in"}, {"name": "Janaki Meena M", "phone": "9843358320", "cabin": "AB 2 - 1F Lab IEDC, Cabin No. 1", "email": "janakimeena.m@vit.ac.in"}, {"name": "Jayaram B", "phone": "9486203960", "cabin": "AB 1 - 4F Main, Cabin No. 2", "email": "jayaram.b@vit.ac.in"}, {"name": "Jeipratha P N", "phone": "9150989331", "cabin": "AB 3 Fifth floor Annexure cabin no 7", "email": "jeiprathap.n@vit.ac.in"}, {"name": "Jenila Livingston L M", "phone": "9444337733", "cabin": "AB 1 - 4F Main, Cabin No. 1", "email": "jenila.lm@vit.ac.in"}, {"name": "Joe Dhanith P R", "phone": "8903939076/8667356545", "cabin": "AB3-611 - Programming Language Lab VII (Faculty Cabin inside LAB)", "email": "joedhanith.pr@vit.ac.in"}, {"name": "Johanan Joysingh S", "phone": "9962179287", "cabin": "AB 3-510B, 5th floor, Cabin 8", "email": "johananjoysingh.s@vit.ac.in"}, {"name": "Kanimozhi S", "phone": "8056135900", "cabin": "AB 3 - 5F Main 515, Cabin No. 18", "email": "skanimozhi@vit.ac.in"}, {"name": "Kanniga Devi R", "phone": "9750123659", "cabin": "AB 3 - 7F,\u00a0Cabin\u00a0No.14", "email": "kannigadevi.r@vit.ac.in"}, {"name": "Kavitha J C", "phone": "9176463264", "cabin": "AB 3- 2F Annexure, Cabin No 21", "email": "kavitha.jc@vit.ac.in"}, {"name": "Khadar Nawas K", "phone": "9159182399", "cabin": "AB 1 - 3F Annexure, Cabin No. 9", "email": "khadarnawas.k@vit.ac.in"}, {"name": "Kishor Kisan Ingle", "phone": "8688365642", "cabin": "AB 3  - 3F Annexure Cabin No 15", "email": "kishorkisan.ingle@vit.ac.in"}, {"name": "Kumaran K", "phone": "9994855142", "cabin": "AB3 Sixth floor\u00a0 Annexure Cabin No 1", "email": "kumaran.k@vit.ac.in"}, {"name": "Lekshmi K", "phone": "9952500618", "cabin": "AB 3- First Floor Annexure Cabin No 11", "email": "lekshmi.k@vit.ac.in"}, {"name": "Logeswari G", "phone": "9940673360", "cabin": "AB 3- First Floor Annexure Cabin No 13", "email": "logeswari.g@vit.ac.in"}, {"name": "M Revathi", "phone": "9786405641", "cabin": "AB 3 - 2F Main 211, Cabin No. 09", "email": "m.revathi@vit.ac.in"}, {"name": "M. Braveen", "phone": "9677745750", "cabin": "AB 1 - 4F Annexure, Cabin No. 62", "email": "braveen.m@vit.ac.in"}, {"name": "Maheswari N", "phone": "9865918740", "cabin": "AB 1 - 2F 206 Lab (Faculty Cabin inside LAB)", "email": "maheswari.n@vit.ac.in"}, {"name": "Maheswari P", "phone": "9626990985/9750706085", "cabin": "Not listed", "email": "maheswari.p@vit.ac.in"}, {"name": "Maheswari S", "phone": "9884355623", "cabin": "AB 1 - 3F Annexure, Cabin No. 16", "email": "maheswari.s@vit.ac.in"}, {"name": "Malini A", "phone": "9443282338", "cabin": "AB 1-3F-Annexure-Cabin 18", "email": "a.malini@vit.ac.in"}, {"name": "Manas Ranjan Prusty", "phone": "9444772724", "cabin": "AB 1 - 3F 307 MIDAS Lab (Faculty Cabin inside LAB)", "email": "manas.ranjan@vit.ac.in"}, {"name": "Manikandan P", "phone": "9566337811", "cabin": "AB 3 Sixth floor\u00a0 Annexure Cabin No 10", "email": "manikandan.pr@vit.ac.in"}, {"name": "Manimegalai T", "phone": "9445090352", "cabin": "AB 3 - 412 Programming Language Lab 7", "email": "manimegalai.t@vit.ac.in"}, {"name": "Modigari Narendra", "phone": "7200353496", "cabin": "AB 3 - 2F Main 212, Cabin No. 17", "email": "modigari.narendra@vit.ac.in"}, {"name": "Natarajan B", "phone": "9952764720", "cabin": "AB 3 Second Floor Annexure Cabin No 2", "email": "natarajan.b@vit.ac.in"}, {"name": "Nayeemulla Khan", "phone": "9444470335", "cabin": "AB 1 - 3F Main 305, Cabin No. 12/AB1 - 1F Dean Academics Office", "email": "nayeemulla.khan@vit.ac.in"}, {"name": "Nivedita M", "phone": "9952612366", "cabin": "AB 1 - 3F Annexure, Cabin No. 26", "email": "nivedita.m@vit.ac.in"}, {"name": "Om Kumar C U", "phone": "9952035395", "cabin": "AB 3 - 1F Main 112, Cabin No. 16", "email": "omkumar.cu@vit.ac.in"}, {"name": "Omana J", "phone": "9789024341", "cabin": "AB 3 Fourth Floor Annexure Cabin No 2", "email": "omana.j@vit.ac.in"}, {"name": "P. Sankar", "phone": "9444483472/7598575385", "cabin": "AB 3 Ground Floor Annexure Cabin No 10", "email": "sankar.p@vit.ac.in"}, {"name": "P. Saravanan", "phone": "9488305333", "cabin": "AB 3 -202 Programming Language Lab IV (Faculty Cabin inside Lab)", "email": "saravanan.p@vit.ac.in"}, {"name": "Padma J", "phone": "9962528128", "cabin": "AB 3 Second Floor Annexure Cabin No 14", "email": "padma.j@vit.ac.in"}, {"name": "Pandiyaraju V", "phone": "9894536368", "cabin": "AB 3 - 1F Main, Cabin No. 5", "email": "pandiyaraju.v@vit.ac.in"}, {"name": "Pattabiraman V", "phone": "9842289896", "cabin": "AB 1 - 1F Main Cabin, Cabin No. 103", "email": "pattabiraman.v@vit.ac.in"}, {"name": "Pavithra S", "phone": "9840582088", "cabin": "AB 3 - 5F Main 514, Cabin No. 4", "email": "pavithra.sekar@vit.ac.in"}, {"name": "Poonkodi M", "phone": "9840250563", "cabin": "AB 3 Third Floor Annexure Cabin No 19", "email": "poonkodi.m@vit.ac.in"}, {"name": "Poornima S", "phone": "9786246267", "cabin": "AB 1 - 206 Lab inside cabin 2", "email": "poornima.s@vit.ac.in"}, {"name": "Pradeep K V", "phone": "9445825675", "cabin": "AB 1 - 6F 605B Lab (Faculty Cabin inside LAB)", "email": "pradeep.kv@vit.ac.in"}, {"name": "Prakash P", "phone": "9884814492", "cabin": "AB 4 - Third Floor, Cabin 26", "email": "prakash.p@vit.ac.in"}, {"name": "Premalatha M", "phone": "9884326554", "cabin": "AB 1 - 4F New Annexure, Cabin No. 41", "email": "premalatha.m@vit.ac.in"}, {"name": "Prethija G", "phone": "9944946909", "cabin": "AB 3-5F-Main Faculty cabin, Cabin no: 13", "email": "g.prethija@vit.ac.in"}, {"name": "Priyaadharshini M", "phone": "7845721150", "cabin": "AB 1 - 2F Main 203, Cabin No. 11", "email": "priyaadharshini.m@vit.ac.in"}, {"name": "Priyadarshini J", "phone": "9486074882", "cabin": "AB 1 - 4F New Annexure, Cabin No. 63", "email": "priyadarshini.j@vit.ac.in"}, {"name": "R Jothi", "phone": "8989120577", "cabin": "AB4 - Third Floor, Cabin 29", "email": "jothi.r@vit.ac.in"}, {"name": "Rabindra Kumar Singh", "phone": "9884367578", "cabin": "AB 1 - 3F Main 305, Cabin No. 4", "email": "rabindrakumar.singh@vit.ac.in"}, {"name": "Radhika Selvamani", "phone": "9677144431", "cabin": "AB 2 - GF Main, Cabin No. 4", "email": "radhika.selvamani@vit.ac.in"}, {"name": "Rajakumar R", "phone": "6379626928/9047970047", "cabin": "AB 3 - 7F,\u00a0Cabin\u00a0No.19", "email": "rajakumar.r@vit.ac.in"}, {"name": "Rajalakshmi R", "phone": "9445212822", "cabin": "AB 2 - 2F Main 201, Cabin No. 201A", "email": "rajalakshmi.r@vit.ac.in"}, {"name": "Rajalakshmi V", "phone": "9444994615", "cabin": "Not listed", "email": "v.rajalakshmi@vit.ac.in"}, {"name": "Rajarajeswari S", "phone": "9790896652", "cabin": "AB 1 - 1F Annexure, Cabin No. 29", "email": "rajarajeswari.s@vit.ac.in"}, {"name": "Rajesh Kumar", "phone": "9092952221", "cabin": "AB 1 - 7F Annexure, Cabin No. 17", "email": "rajesh.kumar@vit.ac.in"}, {"name": "Rajesh M", "phone": "9944043544", "cabin": "AB 1 - 1F New Annexure, Cabin No. 41", "email": "rajesh.m@vit.ac.in"}, {"name": "Rajiv Vincent", "phone": "9994777058", "cabin": "AB 1 - 1F New Annexure, Cabin No. 36", "email": "rajiv.vincent@vit.ac.in"}, {"name": "Renta Chintala Bhargavi", "phone": "9940683362", "cabin": "AB 1 - 4F New Annexure, Cabin No. 59", "email": "bhargavi.r@vit.ac.in"}, {"name": "Rolla Subrahmanyam", "phone": "9490563325/6301303951", "cabin": "AB 3 Third Floor Annexure Cabin No 16", "email": "rolla.subrahmanyam@vit.ac.in"}, {"name": "S Jahangeer Sidiq", "phone": "8427730191", "cabin": "AB 3 - 4F Main 414, Cabin No. 7", "email": "jahangeersidiq.s@vit.ac.in"}, {"name": "S Vigneshwari", "phone": "9941571360", "cabin": "AB 1- 1st floor Annexure 2 cabin 42", "email": "s.vigneshwari@vit.ac.in"}, {"name": "Saleena B", "phone": "9840695935", "cabin": "AB 1 - 3F Main 305, Cabin No. 6", "email": "saleena.b@vit.ac.in"}, {"name": "Sambath M", "phone": "9791105214", "cabin": "AB 3-510B, 5th floor, Cabin 3", "email": "m.sambath@vit.ac.in"}, {"name": "Sangeetha N", "phone": "9444910470", "cabin": "AB 3 - GF Main 12, Cabin No. 22", "email": "n.sangeetha@vit.ac.in"}, {"name": "Saranya G", "phone": "8870098588", "cabin": "AB 3 Fourth Floor Annexure Cabin No 1", "email": "saranya.g@vit.ac.in"}, {"name": "Sarita Kumari", "phone": "8797935215", "cabin": "AB 3 Fourth Floor Annexure Cabin No 6", "email": "sarita.kumari@vit.ac.in"}, {"name": "Sellam V", "phone": "9840710665", "cabin": "AB 3 Fifth Floor Main Cabin No 2", "email": "sellam.v@vit.ac.in"}, {"name": "Senthil Kumar A M", "phone": "9677531892", "cabin": "AB 3 - 1F Main 111, Cabin No. 6", "email": "senthilkumar.am@vit.ac.in"}, {"name": "Senthil Prakash P N", "phone": "7502202777", "cabin": "AB 3 - 7F, Main Cabin No.\u00a022", "email": "senthilprakash.pn@vit.ac.in"}, {"name": "Sharmila Devi S", "phone": "8148879985", "cabin": "AB 3 Third Floor Annexure Cabin No 5", "email": "sharmiladevi.s@vit.ac.in"}, {"name": "Sherly Alphonse", "phone": "9486452045", "cabin": "AB3-612 - Programming Language Lab VII (Faculty Cabin inside LAB)", "email": "sherly.a@vit.ac.in"}, {"name": "Shivani Gupta", "phone": "9406580983/8770989850", "cabin": "AB 3 - 2F Main, Cabin No 12", "email": "shivani.gupta@vit.ac.in"}, {"name": "Shridevi S", "phone": "9791087626", "cabin": "AB 1 - 2F Annexure, Cabin No. 24", "email": "shridevi.s@vit.ac.in"}, {"name": "Shyamala L", "phone": "9884655300", "cabin": "Admin Block - 2F SDC Office", "email": "shyamalal@vit.ac.in"}, {"name": "Sindhu Ravindran", "phone": "9791051674", "cabin": "Not listed", "email": "sindhu.ravindran@vit.ac.in"}, {"name": "Sivakami R", "phone": "9442464890", "cabin": "AB 3- 2F Annexure, Cabin No 22", "email": "sivakami.r@vit.ac.in"}, {"name": "Sivaramakrishnan N", "phone": "9444285627", "cabin": "AB 3 Fourth Floor Annexure Cabin No 12", "email": "sivaramakrishnan.n@vit.ac.in"}, {"name": "Sivaranjani N", "phone": "7397301195", "cabin": "AB 3-6F-Main-Cabin 12", "email": "sivaranjani.n@vit.ac.in"}, {"name": "Sreeja P S", "phone": "9444624966", "cabin": "AB 3- First Floor Annexure Cabin No 18", "email": "sreeja.ps@vit.ac.in"}, {"name": "Srinivasa Perumal R", "phone": "8870537819", "cabin": "Admin Block - 2F Academics Office, Cabin No. 3", "email": "r.srinivasaperumal@vit.ac.in"}, {"name": "Sudha C", "phone": "9789611269", "cabin": "AB 3-3F-Main Faculty cabin, Cabin no: 19", "email": "sudha.c@vit.ac.in"}, {"name": "Suganya G", "phone": "9894862359", "cabin": "AB 1 - 3F Main 305, Cabin No. 13", "email": "suganya.g@vit.ac.in"}, {"name": "Suganya R", "phone": "9150245157", "cabin": "AB 1 - 2F 205A Lab (Faculty Cabin inside LAB)", "email": "suganya.ramamoorthy@vit.ac.in"}, {"name": "Suguna", "phone": "9976750009", "cabin": "AB 3 - GF Main 010, Cabin No. 08", "email": "suguna.m@vit.ac.in"}, {"name": "Sujatha M", "phone": "9843610505", "cabin": "AB 1 - 4th Floor Annexure 2 Cabin 41", "email": "sujatha.m@vit.ac.in"}, {"name": "Sweetlin Hemalatha C", "phone": "9791010060", "cabin": "AB 1 - 3F Main 305, Cabin No. 14", "email": "sweetlin.hemalatha@vit.ac.in"}, {"name": "Syed Ibrahim S P", "phone": "9944416392", "cabin": "AB 3 - 7F CIQA Room, Cabin No.2", "email": "syedibrahim.sp@vit.ac.in"}, {"name": "Tahir Mujtaba", "phone": "9796576790", "cabin": "AB 3 Ground Floor Annexure Cabin No 5", "email": "tahir.mujtaba@vit.ac.in"}, {"name": "Tamilarasi K", "phone": "9551640501", "cabin": "AB 3 - 1F Main 112, Cabin No. 12", "email": "tamilarasi.k@vit.ac.in"}, {"name": "Thomas Abraham J V", "phone": "9176864924", "cabin": "AB 1 - 3F Annexure, Cabin No. 19", "email": "thomasabraham.jv@vit.ac.in"}, {"name": "Trilok Nath Pandey", "phone": "9583831613", "cabin": "AB 3 - GF Main 012, Cabin No. 12", "email": "triloknath.pandey@vit.ac.in"}, {"name": "Tulasi Prasad Sariki", "phone": "8675724402", "cabin": "AB 3 - 7F CIQA Room, Cabin No. 5", "email": "tulasiprasad.sariki@vit.ac.in"}, {"name": "Umitty Srinivasa Rao", "phone": "7845374637/7904714516", "cabin": "AB 1 - 3F Annexure, Cabin No. 29", "email": "umitty.srinivasarao@vit.ac.in"}, {"name": "Valarmathi K", "phone": "9940143964", "cabin": "AB 3 Third Floor Annexure Cabin No 4", "email": "valarmathi.k@vit.ac.in"}, {"name": "Valarmathi Sudhakar", "phone": "7708781602", "cabin": "AB 2 - 4F Main, Cabin No. 4", "email": "valarmathi.sudhakar@vit.ac.in"}, {"name": "Vidhya Lakshmi M", "phone": "7358577682", "cabin": "AB 3 Fourth Floor Annexure Cabin No 5", "email": "vidhyalakshmi.m@vit.ac.in"}, {"name": "Vignesh U", "phone": "9994887741", "cabin": "AB 3 Third Floor Annexure Cabin No 13", "email": "vignesh.u@vit.ac.in"}, {"name": "Vijayalakshmi A", "phone": "9445958156/9094568100", "cabin": "AB 1 - 3F Annexure, Cabin No. 21", "email": "vijayalakshmi.av@vit.ac.in"}, {"name": "Vijayaprabakaran K", "phone": "9789329625", "cabin": "AB 3 - 4F Main 410, Cabin No. 17", "email": "vijayaprabakaran.k@vit.ac.in"}, {"name": "Viswanathan V", "phone": "9443174417", "cabin": "AB1 - 3F Dean Cabin", "email": "viswanathan.v@vit.ac.in"}, {"name": "Vivekanandan M", "phone": "9840562096", "cabin": "AB 3 Fourth Floor Annexure Cabin No 10", "email": "vivekanandan.m@vit.ac.in"}, {"name": "Yogesh C", "phone": "9080565236", "cabin": "Alpha-Health Centre - 3F Main 1, Cabin No. 1", "email": "yogesh.c@vit.ac.in"}], "Cyber-Physical Systems": [{"name": "A.Pravin Renold", "phone": "9994352664", "cabin": "AB 3 - 5F Main 514, Cabin No. 6", "email": "pravinrenold.a@vit.ac.in"}, {"name": "Anusooya G", "phone": "9176313600", "cabin": "AB 1 - 4F New Annexure, Cabin No. 57", "email": "anusooya.g@vit.ac.in"}, {"name": "Asha Jerlin M", "phone": "9003927773", "cabin": "AB 1 - 8F Main 4, Cabin No. 4", "email": "ashajerlin.m@vit.ac.in"}, {"name": "Benila S", "phone": "7305509904", "cabin": "AB 3 Fourth Floor Annexure Cabin No 11", "email": "benila.s@vit.ac.in"}, {"name": "Hemalatha K", "phone": "9444279287/8072894563", "cabin": "AB 3 Fifth floor Annexure cabin no 2", "email": "hemalatha.kasirajan@vit.ac.in"}, {"name": "Joshua Sunder David Reddipogu", "phone": "9894552492", "cabin": "AB 3-4F-Annexure Faculty cabin, Cabin No: 17", "email": "joshua.sunder@vit.ac.in"}, {"name": "K Uma Maheswari", "phone": "9629620464", "cabin": "AB 3 Ground floor-Main Faculty cabin, Cabin no: 3", "email": "k.umamaheswari@vit.ac.in"}, {"name": "Kabilan K", "phone": "9597762704", "cabin": "AB 3 - 3F Main 310 CPS LAB (Faculty Cabin inside LAB)", "email": "kabilan.k@vit.ac.in"}, {"name": "Kanchana Devi V", "phone": "9500642843", "cabin": "AB 1 - 3F Annexure, Cabin No. 22", "email": "kanchanadevi@vit.ac.in"}, {"name": "Kumar R", "phone": "9444247444", "cabin": "AB 1 - 6F Annexure, 613 LAB", "email": "kumar.rangasamy@vit.ac.in"}, {"name": "Manjula V", "phone": "9841354495", "cabin": "AB 1 - 3F Annexure, Cabin No. 23", "email": "manjula.v@vit.ac.in"}, {"name": "Noel Jeygar Robert V", "phone": "9962944118", "cabin": "AB 3 - 3F Main 314, Cabin No. 6", "email": "noeljeygar.robert@vit.ac.in"}, {"name": "Padmavathy T V", "phone": "9962552691", "cabin": "AB 3 - 2F Main 211, Cabin No. 5", "email": "padmavathy.tv@vit.ac.in"}, {"name": "Parvathy A K", "phone": "9840488889", "cabin": "AB 3 Fifth floor Annexure cabin no 5", "email": "parvathya.k@vit.ac.in"}, {"name": "Pradeep Kumar T.S", "phone": "9994626196", "cabin": "AB 1 - 3F Main (Next to 311 Lab), Cabin No. 5", "email": "tspradeepkumar@vit.ac.in"}, {"name": "Prassanna J", "phone": "9841475035", "cabin": "AB 1 - 4F New Annexure, Cabin No. 27", "email": "prassanna.j@vit.ac.in"}, {"name": "Priyadarshini R", "phone": "9840352046", "cabin": "AB 3 - 2F GF Main Cabin No 10", "email": "priyadarshini.r@vit.ac.in"}, {"name": "R.Rathna", "phone": "9443573477", "cabin": "AB 3 - 6F Main 614, Cabin No. 6", "email": "rathna.r@vit.ac.in"}, {"name": "Radha R", "phone": "9444787294", "cabin": "AB 1 - 2F 210 Lab (Faculty Cabin inside LAB)", "email": "rradha@vit.ac.in"}, {"name": "Rajesh R", "phone": "9790438274", "cabin": "AB 3 - 5F Main 514, Cabin No. 3", "email": "rrajesh@vit.ac.in"}, {"name": "Rajkumar R", "phone": "9894808403", "cabin": "Not listed", "email": "rajkumar.r@vit.ac.in"}, {"name": "RaviChandran M", "phone": "9444268396", "cabin": "Not listed", "email": "m.ravichandran@vit.ac.in"}, {"name": "Renuka Devi R", "phone": "9952399936", "cabin": "AB 1 - 2F Annexure, Cabin No. 17", "email": "renukadevi.r@vit.ac.in"}, {"name": "Rukmani P", "phone": "9790944341", "cabin": "AB 1 - 3F Main 305, Cabin No. 2", "email": "rukmani.p@vit.ac.in"}, {"name": "S A Amutha Jeevakumari", "phone": "9994590370", "cabin": "AB 3 - GF Main 012, Cabin No. 16", "email": "amutha.jeevakumari@vit.ac.in"}, {"name": "Sahaya Beni Prathiba B", "phone": "7373888115", "cabin": "AB 3 - 3F Main, Cabin No. 23", "email": "prathiba.sbb@vit.ac.in"}, {"name": "Sakthivel R", "phone": "9976825312", "cabin": "AB 3 Sixth floor\u00a0 Annexure Cabin No 9", "email": "r.sakthivel@vit.ac.in"}, {"name": "Shola Usha Rani", "phone": "8870313666", "cabin": "AB 1 - 2F 206 Lab (Faculty Cabin inside LAB)", "email": "sholausha.rani@vit.ac.in"}, {"name": "Srimathi C", "phone": "9442053642", "cabin": "Not listed", "email": "csrimathi@vit.ac.in"}, {"name": "Subitha D", "phone": "9884210662", "cabin": "AB 3 - 2F Annexure, Cabin No 18", "email": "subitha.d@vit.ac.in"}, {"name": "Sudha A", "phone": "9962444339", "cabin": "Alpha-Health Centre - Second Floor (Right - S6)", "email": "sudha.a@vit.ac.in"}, {"name": "Sureshkumar WI", "phone": "9840264099", "cabin": "AB 3 - GF Main 012, Cabin No. 17", "email": "wi.sureshkumar@vit.ac.in"}, {"name": "Suseela S", "phone": "7708108699", "cabin": "AB 3 - 1F Main 112, Cabin No. 18", "email": "suseela.s@vit.ac.in"}, {"name": "Vergin Raja Sarobin M", "phone": "9710423195", "cabin": "AB 1 - 3F Main 305, Cabin No. 3", "email": "verginraja.m@vit.ac.in"}, {"name": "X Anita", "phone": "9444307868", "cabin": "AB 3 - 7F Annexure DG, Cabin No 4", "email": "anita.x@vit.ac.in"}]};
+const GROUPS = [
+  { key: "Robotics", label: "Robotics", cls: "robotics" },
+  { key: "Artificial Intelligence", label: "AI", cls: "ai" },
+  { key: "Cyber-Physical Systems", label: "Cyber-Physical Systems", cls: "cps" }
+];
+let activeGroup = GROUPS[0].key;
+let state = {};
+let searchTerm = "";
+const STORAGE_KEY = "faculty-checklist-v1";
+
+function allEntries() {
+  return GROUPS.flatMap(g => DATA[g.key]);
+}
+
+async function loadState() {
+  try {
+    const res = await window.storage.get(STORAGE_KEY, true);
+    state = res && res.value ? JSON.parse(res.value) : {};
+  } catch (e) {
+    state = {};
+  }
+  render();
+}
+
+let saveTimer = null;
+function saveState() {
+  const dot = document.getElementById("statusDot");
+  const txt = document.getElementById("statusText");
+  dot.classList.add("saving");
+  txt.textContent = "Saving...";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
+      dot.classList.remove("saving");
+      txt.textContent = "Synced";
+    } catch (e) {
+      txt.textContent = "Save failed - retrying";
+      dot.classList.add("saving");
+    }
+  }, 250);
+}
+
+function renderTabs() {
+  const tabs = document.getElementById("tabs");
+  tabs.innerHTML = "";
+  GROUPS.forEach(g => {
+    const entries = DATA[g.key];
+    const checked = entries.filter(e => state[e.email]).length;
+    const btn = document.createElement("button");
+    btn.className = "tab" + (g.key === activeGroup ? " active" : "");
+    btn.innerHTML = g.label + ' <span class="count">(' + checked + '/' + entries.length + ')</span>';
+    btn.onclick = () => { activeGroup = g.key; searchTerm = ""; document.getElementById("search").value = ""; render(); };
+    tabs.appendChild(btn);
+  });
+}
+
+function renderOverall() {
+  const entries = allEntries();
+  const total = entries.length;
+  const checked = entries.filter(e => state[e.email]).length;
+  document.getElementById("overallNum").textContent = checked + " / " + total + " checked";
+  document.getElementById("overallBar").style.width = (total ? (checked / total * 100) : 0) + "%";
+}
+
+function renderList() {
+  const group = GROUPS.find(g => g.key === activeGroup);
+  const entries = DATA[activeGroup];
+  const checked = entries.filter(e => state[e.email]).length;
+  document.getElementById("groupProgress").textContent = checked + " of " + entries.length + " checked in " + group.label;
+
+  const term = searchTerm.trim().toLowerCase();
+  const filtered = term
+    ? entries.filter(e => e.name.toLowerCase().includes(term) || e.cabin.toLowerCase().includes(term))
+    : entries;
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (filtered.length === 0) {
+    const li = document.createElement("li");
+    li.className = "empty";
+    li.textContent = "No matches.";
+    list.appendChild(li);
+    return;
+  }
+  filtered.forEach(e => {
+    const isChecked = !!state[e.email];
+    const li = document.createElement("li");
+    li.className = "row" + (isChecked ? " checked" : "");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = isChecked;
+    cb.addEventListener("change", () => {
+      state[e.email] = cb.checked;
+      li.classList.toggle("checked", cb.checked);
+      saveState();
+      renderTabs();
+      renderOverall();
+      document.getElementById("groupProgress").textContent =
+        entries.filter(x => state[x.email]).length + " of " + entries.length + " checked in " + group.label;
+    });
+    const rowtext = document.createElement("div");
+    rowtext.className = "rowtext";
+    const name = document.createElement("p");
+    name.className = "name";
+    name.textContent = e.name;
+    const meta = document.createElement("p");
+    meta.className = "meta";
+    meta.textContent = e.phone + "  \u00b7  " + e.cabin;
+    rowtext.appendChild(name);
+    rowtext.appendChild(meta);
+    li.appendChild(cb);
+    li.appendChild(rowtext);
+    list.appendChild(li);
+  });
+}
+
+function render() {
+  renderTabs();
+  renderOverall();
+  renderList();
+}
+
+document.getElementById("search").addEventListener("input", (e) => {
+  searchTerm = e.target.value;
+  renderList();
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  const entries = DATA[activeGroup];
+  entries.forEach(e => { delete state[e.email]; });
+  saveState();
+  render();
+});
+
+loadState();
+setInterval(loadState, 12000);
+</script>
+</body>
+</html>
